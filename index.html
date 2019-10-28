@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Canvas project</title>
+    <title>Polyhedrons</title>
     <style>
       body {
         margin: 0;
@@ -12,9 +12,22 @@
         width: 100vw;
         height: 100vh;
       }
+      .buttons {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+      }
     </style>
   </head>
   <body>
+    <div class="buttons">
+      <button id="button-a-plus">a +</button>
+      <button id="button-a-minus">a -</button>
+      <button id="button-b-plus">b +</button>
+      <button id="button-b-minus">b -</button>
+      <button id="button-c-plus">c +</button>
+      <button id="button-c-minus">c -</button>
+    </div>
     <canvas></canvas>
     <script src="index.js"></script>
   </body>
