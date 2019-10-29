@@ -1,3 +1,4 @@
+const { cos, sin } = Math
 const canvas = document.getElementsByTagName('canvas')[0]
 const _ = canvas.getContext('2d')
 
@@ -45,6 +46,7 @@ function draw() {
     .map(node => projectOnZPlane(node, hexahedron.rotation))
     .map(point => translateOnZPlane(point, translationVector))
 
+  console.log('points', points)
   points.forEach(drawPoint)
 
   hexahedron.vertices.forEach(([i, j]) => {
@@ -63,21 +65,62 @@ function drawPoint({ x, y }) {
   _.stroke()
 }
 
-function projectOnZPlane({ x, y, z }, { a, b, c }) {
-  console.log('x, y, z', x, y, z)
-  const n = Math.sqrt(x * x + y * y + z * z)
-  const alpha = Math.atan2(z, y)
-  const beta = Math.atan2(x, z)
-  const gamma = Math.atan2(y, x)
+function multiplyMatrices(a, b) {
+  const c = []
 
-  const xx = n * Math.cos(beta) * Math.cos(gamma)
-  const yy = n * Math.cos(alpha) * Math.cos(gamma)
-  const zz = n * Math.cos(alpha) * Math.cos(beta)
-  console.log('aplha, beta, gamma', alpha, beta, gamma)
+  for (let i = 0; i < a.length; i++) {
+    const row = []
+    for (let j = 0; j < b[0].length; j++) {
+      let sum = 0
+      for (let k = 0; k < b.length; k++) {
+        sum += a[i][k] * b[k][j]
+      }
+      row.push(sum)
+    }
+    c.push(row)
+  }
+
+  return c
+}
+
+function projectOnZPlane({ x, y, z }, { a, b, c }) {
+  const ca = cos(a)
+  const sa = sin(a)
+  const cb = cos(b)
+  const sb = sin(b)
+  const cc = cos(c)
+  const sc = sin(c)
+
+  const X = [[x], [y], [z]]
+  const rotateX = [
+    [1, 0, 0],
+    [0, ca, -sa],
+    [0, sa, ca],
+  ]
+  const rotateY = [
+    [cb, 0, -sb],
+    [0, 1, 0],
+    [sb, 0, cb],
+  ]
+  const rotateZ = [
+    [cc, -sc, 0],
+    [sc, cc, 0],
+    [0, 0, 1],
+  ]
+
+  const Y = multiplyMatrices(rotateZ, multiplyMatrices(rotateY, multiplyMatrices(rotateX, X)))
+
+  // const projection = [
+  //   [1, 0, 0.5],
+  //   [0, 1, 0.5],
+  //   [0, 0, 0],
+  // ]
+
+  // Y = multiplyMatrices(projection, Y)
 
   return {
-    x: xx,
-    y: yy,
+    x: Y[0][0],
+    y: Y[1][0],
   }
 }
 
