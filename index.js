@@ -1,4 +1,4 @@
-const { cos, sin } = Math
+const { cos, sin, PI } = Math
 const canvas = document.getElementsByTagName('canvas')[0]
 const _ = canvas.getContext('2d')
 
@@ -7,8 +7,6 @@ const height = canvas.height = window.innerHeight
 
 _.fillStyle = 'black'
 _.strokeStyle = 'white'
-
-const translationVector = { x: width / 2, y: height / 2 }
 
 const hexahedron = createHexahedron()
 
@@ -54,21 +52,56 @@ document.getElementById('button-gamma-minus').onclick = () => {
   hexahedron.rotationOffset.gamma -= Math.PI / 16
 }
 
+const oVector = { x: 0, y: 0, z: 0 }
+const oRotation = { a: 0, b: 0, c: 0 }
+const oRotationOffset = { alpha: 0, beta: 0, gamma: 0 }
+const translationVector = { x: width / 2, y: height / 2 }
+const triangle = createPolygon(7)
+
 function draw() {
   _.fillRect(0, 0, width, height)
 
-  const points = hexahedron.nodes
+  // const points = hexahedron.nodes
+  //   .map(node => scaleNode(node, 200))
+  //   .map(node => projectOnZPlane(node, hexahedron.rotation, hexahedron.rotationOffset))
+  //   .map(point => translateOnZPlane(point, translationVector))
+
+  // _.beginPath()
+  // hexahedron.vertices.forEach(([i, j]) => {
+  //   _.moveTo(points[i].x, points[i].y)
+  //   _.lineTo(points[j].x, points[j].y)
+  // })
+  // _.closePath()
+  // _.stroke()
+
+  const points = triangle
     .map(node => scaleNode(node, 200))
-    .map(node => projectOnZPlane(node, hexahedron.rotation, hexahedron.rotationOffset))
+    .map(node => projectOnZPlane(node, oRotation, oRotationOffset))
     .map(point => translateOnZPlane(point, translationVector))
 
+  console.log('triangle', triangle)
+  console.log('points', points)
+
+  points.forEach(drawPoint)
+
   _.beginPath()
-  hexahedron.vertices.forEach(([i, j]) => {
-    _.moveTo(points[i].x, points[i].y)
-    _.lineTo(points[j].x, points[j].y)
-  })
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i]
+    const p2 = i === points.length - 1 ? points[0] : points[i + 1]
+
+    _.moveTo(p1.x, p1.y)
+    _.lineTo(p2.x, p2.y)
+  }
   _.closePath()
   _.stroke()
+}
+
+function drawPoint({ x, y }) {
+  _.fillStyle = 'white'
+  _.beginPath()
+  _.arc(x, y, 3, 0, 2 * PI)
+  _.closePath()
+  _.fill()
 }
 
 function update() {
@@ -96,6 +129,42 @@ function multiplyMatrices(a, b) {
   return c
 }
 
+function addVectorToPoint(p, v) {
+  return {
+    x: p.x + v.x,
+    y: p.y + v.y,
+    z: p.z + v.z,
+  }
+}
+
+function addVectors(u, v) {
+  return {
+    x: u.x + v.x,
+    y: u.y + v.y,
+    z: u.z + v.z,
+  }
+}
+
+function rotateVectorOnZAxis({ x, y, z }, angle) {
+  const cosAngle = cos(angle)
+  const sinAngle = sin(angle)
+  const rotateZ = [
+    [cosAngle, -sinAngle, 0],
+    [sinAngle, cosAngle, 0],
+    [0, 0, 1],
+  ]
+  const X = [[x], [y], [z]]
+  const Y = multiplyMatrices(rotateZ, X)
+
+  console.log('Y', Y)
+
+  return {
+    x: Y[0][0],
+    y: Y[1][0],
+    z: Y[2][0],
+  }
+}
+
 function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
   const ca = cos(a)
   const sa = sin(a)
@@ -109,6 +178,9 @@ function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
   const sbeta = sin(beta)
   const cgamma = cos(gamma)
   const sgamma = sin(gamma)
+
+
+  console.log('ca, sa, cb, sb, cc, sc', ca, sa, cb, sb, cc, sc)
 
   const X = [[x], [y], [z]]
   const rotateX = [
@@ -141,6 +213,8 @@ function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
     [sgamma, cgamma, 0],
     [0, 0, 1],
   ]
+
+  console.log('X, rotateX, rotateY, rotateZ, rotateAlpha, rotateBeta, rotateGamma', X, rotateX, rotateY, rotateZ, rotateAlpha, rotateBeta, rotateGamma)
 
   let Y = multiplyMatrices(rotateZ, multiplyMatrices(rotateY, multiplyMatrices(rotateX, X)))
   Y = multiplyMatrices(rotateGamma, multiplyMatrices(rotateBeta, multiplyMatrices(rotateAlpha, Y)))
@@ -217,6 +291,25 @@ function createHexahedron() {
   return polyhedron
 }
 
+function createPolygon(n) {
+  const angle = 2 * Math.PI / n
+  const origin = { x: 0, y: 0, z: 0 }
+  const points = [origin]
+
+  let previousVector = { x: 1, y: 0, z: 0 }
+
+  for (let i = 1; i < n; i++) {
+    const previousPoint = points[i - 1]
+    const vector = rotateVectorOnZAxis(previousVector, angle)
+
+    previousVector = vector
+    points.push(addVectorToPoint(previousPoint, vector))
+  }
+
+  return points
+}
+
 window.addEventListener('load', () => {
-  setInterval(update, 20)
+  // setInterval(update, 20)
+  draw()
 })
