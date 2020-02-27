@@ -61,39 +61,39 @@ const triangle = createPolygon(7)
 function draw() {
   _.fillRect(0, 0, width, height)
 
-  // const points = hexahedron.nodes
-  //   .map(node => scaleNode(node, 200))
-  //   .map(node => projectOnZPlane(node, hexahedron.rotation, hexahedron.rotationOffset))
-  //   .map(point => translateOnZPlane(point, translationVector))
-
-  // _.beginPath()
-  // hexahedron.vertices.forEach(([i, j]) => {
-  //   _.moveTo(points[i].x, points[i].y)
-  //   _.lineTo(points[j].x, points[j].y)
-  // })
-  // _.closePath()
-  // _.stroke()
-
-  const points = triangle
+  const points = hexahedron.nodes
     .map(node => scaleNode(node, 200))
-    .map(node => projectOnZPlane(node, oRotation, oRotationOffset))
+    .map(node => projectOnZPlane(node, hexahedron.rotation, hexahedron.rotationOffset))
     .map(point => translateOnZPlane(point, translationVector))
 
-  console.log('triangle', triangle)
-  console.log('points', points)
-
-  points.forEach(drawPoint)
-
   _.beginPath()
-  for (let i = 0; i < points.length; i++) {
-    const p1 = points[i]
-    const p2 = i === points.length - 1 ? points[0] : points[i + 1]
-
-    _.moveTo(p1.x, p1.y)
-    _.lineTo(p2.x, p2.y)
-  }
+  hexahedron.vertices.forEach(([i, j]) => {
+    _.moveTo(points[i].x, points[i].y)
+    _.lineTo(points[j].x, points[j].y)
+  })
   _.closePath()
   _.stroke()
+
+  // const points = triangle
+  //   .map(node => scaleNode(node, 200))
+  //   .map(node => projectOnZPlane(node, oRotation, oRotationOffset))
+  //   .map(point => translateOnZPlane(point, translationVector))
+
+  // console.log('triangle', triangle)
+  // console.log('points', points)
+
+  // points.forEach(drawPoint)
+
+  // _.beginPath()
+  // for (let i = 0; i < points.length; i++) {
+  //   const p1 = points[i]
+  //   const p2 = i === points.length - 1 ? points[0] : points[i + 1]
+
+  //   _.moveTo(p1.x, p1.y)
+  //   _.lineTo(p2.x, p2.y)
+  // }
+  // _.closePath()
+  // _.stroke()
 }
 
 function drawPoint({ x, y }) {
@@ -178,7 +178,6 @@ function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
   const sbeta = sin(beta)
   const cgamma = cos(gamma)
   const sgamma = sin(gamma)
-
 
   console.log('ca, sa, cb, sb, cc, sc', ca, sa, cb, sb, cc, sc)
 
@@ -310,6 +309,6 @@ function createPolygon(n) {
 }
 
 window.addEventListener('load', () => {
-  // setInterval(update, 20)
+  setInterval(update, 20)
   draw()
 })
