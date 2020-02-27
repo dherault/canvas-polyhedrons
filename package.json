@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/dherault/template-canvas#readme",
   "devDependencies": {
-    "eslint": "^6.5.1",
-    "eslint-config-dherault": "^1.0.3"
+    "eslint": "^6.8.0",
+    "eslint-config-dherault": "^1.0.9"
   }
 }
