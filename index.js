@@ -5,145 +5,62 @@ const _ = canvas.getContext('2d')
 
 const width = canvas.width = window.innerWidth
 const height = canvas.height = window.innerHeight
+const nPolyhedron = Math.round(24 * width / 1920)
 
-const backgroundColor = 'white'
-const verticeColor = 'black'
-const faceColor = 'pink'
-// const nodeColor = 'red'
-// const centerColor = 'blue'
-// const pivotColor = 'green'
-// const originColor = 'gold'
+const backgroundColor = '#3f51b5'
+const verticeColor = 'white'
+const faceColor = '#3f51b5'
 
 const oOrigin = { x: 0, y: 0, z: 0 }
 const forward = { x: 0, y: 0, z: 1 }
-const translationVector = { x: width / 2, y: height / 2, z: 0 }
 
-// const polyhedron = createPolyhedron(4, PI / 2)
-// const polyhedron = createPolyhedron(3, acos(1 / 3))
-// const polyhedron = createPolyhedron(3, acos(-1 / 3))
-const polyhedron = createPolyhedron(3, acos(-sqrt(5) / 3))
-// const polyhedron = createPolyhedron(5, 2 * atan((1 + sqrt(5)) / 2))
-
-let da = 0
-let db = 0
-let dc = 0
-
-document.getElementById('button-a-plus').onclick = () => {
-  da += Math.PI / 360
-}
-document.getElementById('button-a-minus').onclick = () => {
-  da -= Math.PI / 360
-}
-document.getElementById('button-b-plus').onclick = () => {
-  db += Math.PI / 360
-}
-document.getElementById('button-b-minus').onclick = () => {
-  db -= Math.PI / 360
-}
-document.getElementById('button-c-plus').onclick = () => {
-  dc += Math.PI / 360
-}
-document.getElementById('button-c-minus').onclick = () => {
-  dc -= Math.PI / 360
+const nameToScale = {
+  hexahedron: [40, 64],
+  tetraedron: [40, 64],
+  octahedron: [40, 64],
+  icosahedron: [32, 64],
+  dodecahedron: [24, 48],
 }
 
-document.getElementById('button-alpha-plus').onclick = () => {
-  polyhedron.alpha += Math.PI / 16
-}
-document.getElementById('button-alpha-minus').onclick = () => {
-  polyhedron.alpha -= Math.PI / 16
-}
-document.getElementById('button-beta-plus').onclick = () => {
-  polyhedron.beta += Math.PI / 16
-}
-document.getElementById('button-beta-minus').onclick = () => {
-  polyhedron.beta -= Math.PI / 16
-}
-document.getElementById('button-gamma-plus').onclick = () => {
-  polyhedron.gamma += Math.PI / 16
-}
-document.getElementById('button-gamma-minus').onclick = () => {
-  polyhedron.gamma -= Math.PI / 16
-}
+const patrons = [
+  createPolyhedron(4, PI / 2, 'hexahedron'),
+  createPolyhedron(3, acos(1 / 3), 'tetraedron'),
+  createPolyhedron(3, acos(-1 / 3), 'octahedron'),
+  createPolyhedron(3, acos(-sqrt(5) / 3), 'icosahedron'),
+  createPolyhedron(5, 2 * atan((1 + sqrt(5)) / 2), 'dedecahedron'),
+]
 
+const polyhedrons = []
 
-function project(nodes, rotationParameters) {
-  return nodes
-  .map(node => scaleVector(node, 200))
-  .map(node => applyRotations(node, rotationParameters))
-  .map(node => translatePoint(node, translationVector))
+for (let i = 0; i < nPolyhedron; i++) {
+  polyhedrons.push(createPolyhedronInstance(randomArray(patrons)))
 }
 
 function draw() {
   _.fillStyle = backgroundColor
   _.fillRect(0, 0, width, height)
 
-  let facesNodes = polyhedron.faces
-  .map(({ nodes, center }) => ({ nodes, center: applyRotations(center, polyhedron) }))
-  .sort((a, b) => a.center.z < b.center.z ? -1 : 1)
+  polyhedrons.forEach(polyhedron => {
+    _.strokeStyle = verticeColor
+    _.fillStyle = faceColor
 
-  console.log('facesNodes', facesNodes)
-  facesNodes = facesNodes
-  .map(({ nodes }) => project(nodes, polyhedron))
+    polyhedron.faces
+    .map(({ nodes, center }) => ({ nodes, center: applyRotations(center, polyhedron) }))
+    .sort((a, b) => a.center.z < b.center.z ? -1 : 1)
+    .map(({ nodes }) => nodes.map(node => applyRotations(node, polyhedron)))
+    .forEach(nodes => {
+      _.beginPath()
+      _.moveTo(nodes[0].x + polyhedron.x, nodes[0].y + polyhedron.y)
 
-  // .sort((a, b) => {
-  //   const ia = polyhedron.faces.indexOf(a)
-  //   const ib = polyhedron.faces.indexOf(b)
+      for (let i = 1; i < nodes.length; i++) {
+        _.lineTo(nodes[i].x + polyhedron.x, nodes[i].y +  polyhedron.y)
+      }
 
-  //   const centerA = polyhedron.centers[ia]
-  //   const centerB = polyhedron.centers[ib]
-
-  //   return centerA.z > centerB.z ? -1 : 1
-  // })
-  // const centers = project(polyhedron.centers, polyhedron.rotation, polyhedron.rotationOffset)
-  // const pivots = project(polyhedron.pivots, polyhedron.rotation, polyhedron.rotationOffset)
-
-  // _.fillStyle = originColor
-  // _.beginPath()
-  // _.arc(translationVector.x, translationVector.y, 5, 0, TAU)
-  // _.closePath()
-  // _.fill()
-
-  _.strokeStyle = verticeColor
-  _.fillStyle = faceColor
-  facesNodes.forEach(nodes => {
-    _.beginPath()
-    _.moveTo(nodes[0].x, nodes[0].y)
-
-    for (let i = 1; i < nodes.length; i++) {
-      _.lineTo(nodes[i].x, nodes[i].y)
-    }
-
-    _.closePath()
-    _.stroke()
-    _.fill()
+      _.closePath()
+      _.stroke()
+      _.fill()
+    })
   })
-
-  // _.fillStyle = nodeColor
-  // faces.forEach(nodes => {
-  //   nodes.forEach(node => {
-  //     _.beginPath()
-  //     _.arc(node.x, node.y, 2, 0, TAU)
-  //     _.closePath()
-  //     _.fill()
-  //   })
-  // })
-
-  // _.fillStyle = centerColor
-  // centers.forEach(center => {
-  //   _.beginPath()
-  //   _.arc(center.x, center.y, 4, 0, TAU)
-  //   _.closePath()
-  //   _.fill()
-  // })
-
-  // _.fillStyle = pivotColor
-  // pivots.forEach(pivot => {
-  //   _.beginPath()
-  //   _.arc(pivot.x, pivot.y, 3, 0, TAU)
-  //   _.closePath()
-  //   _.fill()
-  // })
 }
 
 /* ---
@@ -151,17 +68,41 @@ function draw() {
 --- */
 
 function update() {
-  polyhedron.a += da
-  polyhedron.b += db
-  polyhedron.c += dc
+  polyhedrons.forEach((polyhedron, i) => {
+    polyhedron.a += polyhedron.da
+    polyhedron.b += polyhedron.db
+    polyhedron.c += polyhedron.dc
+    polyhedron.x += polyhedron.dx
+    polyhedron.y += polyhedron.dy
+
+    if (
+      polyhedron.x > width + polyhedron.scaleFactor ||
+      polyhedron.x < -polyhedron.scaleFactor ||
+      polyhedron.y > height + polyhedron.scaleFactor ||
+      polyhedron.y < -polyhedron.scaleFactor
+    ) {
+      polyhedrons.splice(i, 1)
+
+      const nextPolyhedron = createPolyhedronInstance(randomArray(patrons))
+
+      if (Math.random() < 0.5) {
+        nextPolyhedron.x = nextPolyhedron.dx < 0 ? width + nextPolyhedron.scaleFactor : -nextPolyhedron.scaleFactor
+      }
+      else {
+        nextPolyhedron.y = nextPolyhedron.dy < 0 ? height + nextPolyhedron.scaleFactor : -nextPolyhedron.scaleFactor
+      }
+
+      polyhedrons.push(nextPolyhedron)
+    }
+  })
 }
 
 /* ---
   Polyhedron creation
 --- */
 
-function createPolyhedron(nSides, dihedralAngle) {
-  const faces = [createPolygonNodes(nSides, oOrigin, forward)]
+function createPolyhedron(nSides, dihedralAngle, name) {
+  let faces = [createPolygonNodes(nSides, oOrigin, forward)]
   const centers = [oOrigin]
 
   const queue = [
@@ -204,18 +145,14 @@ function createPolyhedron(nSides, dihedralAngle) {
   const centersVector = centers.reduce((accumulator, node) => addVectors(accumulator, node), { x: 0, y: 0, z: 0 })
   const polyhedronCenterTranslation = scaleVector(centersVector, -1 / centers.length)
 
-  return {
-    faces: faces.map((nodes, i) => ({
-      center: centers[i],
-      nodes: nodes.map(node => translatePoint(node, polyhedronCenterTranslation)),
-    })),
-    a: 0,
-    b: 0,
-    c: 0,
-    alpha: 0,
-    beta: 0,
-    gamma: 0,
-  }
+  faces = faces.map((nodes, i) => ({
+    center: centers[i],
+    nodes: nodes.map(node => translatePoint(node, polyhedronCenterTranslation)),
+  }))
+
+  faces.name = name
+
+  return faces
 }
 
 function createPolygonNodes(nSides, origin, normalVector, firstNode) {
@@ -237,9 +174,49 @@ function createPolygonNodes(nSides, origin, normalVector, firstNode) {
   return nodes
 }
 
+function createPolyhedronInstance(patron) {
+  const scaleFactor = randomRange.apply(null, nameToScale[patron.name])
+  const params = suffle([0, randomRange(0, TAU), randomRange(0, TAU)])
+  const dParams = suffle([0, randomRange(0, PI / 64), randomRange(0, PI / 64)])
+
+  return {
+    faces: patron.map(({ center, nodes }) => ({
+      center,
+      nodes: nodes.map(node => scaleVector(node, scaleFactor)),
+    })),
+    scaleFactor,
+    a: params[0],
+    b: params[1],
+    c: params[2],
+    da: dParams[0],
+    db: dParams[1],
+    dc: dParams[2],
+    x: randomInteger(0, width),
+    y: randomInteger(0, height),
+    dx: randomArray([-3, -2, -1, 1, 2, 3]),
+    dy: randomArray([-3, -2, -1, 1, 2, 3]),
+  }
+}
+
 /* ---
   Math helpers
 --- */
+
+function randomArray(a) {
+  return a[Math.floor(Math.random() * a.length)]
+}
+
+function randomRange(a, b) {
+  return Math.random() * (b - a) + a
+}
+
+function randomInteger(a, b) {
+  return Math.floor(randomRange(a, b))
+}
+
+function suffle(a) {
+  return a.sort(() => Math.random() < 0.5 ? -1 : 1)
+}
 
 function multiplyMatrices(a, b) {
   const c = []
@@ -356,19 +333,13 @@ function rotatePointAroundAxis(p, a, b, angle) {
   }
 }
 
-function applyRotations({ x, y, z }, { a, b, c, alpha, beta, gamma }) {
+function applyRotations({ x, y, z }, { a, b, c }) {
   const ca = cos(a)
   const sa = sin(a)
   const cb = cos(b)
   const sb = sin(b)
   const cc = cos(c)
   const sc = sin(c)
-  const calpha = cos(alpha)
-  const salpha = sin(alpha)
-  const cbeta = cos(beta)
-  const sbeta = sin(beta)
-  const cgamma = cos(gamma)
-  const sgamma = sin(gamma)
 
   const rotateX = [
     [1, 0, 0],
@@ -385,26 +356,9 @@ function applyRotations({ x, y, z }, { a, b, c, alpha, beta, gamma }) {
     [sc, cc, 0],
     [0, 0, 1],
   ]
-  const rotateAlpha = [
-    [1, 0, 0],
-    [0, calpha, -salpha],
-    [0, salpha, calpha],
-  ]
-  const rotateBeta = [
-    [cbeta, 0, -sbeta],
-    [0, 1, 0],
-    [sbeta, 0, cbeta],
-  ]
-  const rotateGamma = [
-    [cgamma, -sgamma, 0],
-    [sgamma, cgamma, 0],
-    [0, 0, 1],
-  ]
 
   const X = [[x], [y], [z]]
-
-  let Y = multiplyMatrices(rotateZ, multiplyMatrices(rotateY, multiplyMatrices(rotateX, X)))
-  Y = multiplyMatrices(rotateGamma, multiplyMatrices(rotateBeta, multiplyMatrices(rotateAlpha, Y)))
+  const Y = multiplyMatrices(rotateZ, multiplyMatrices(rotateY, multiplyMatrices(rotateX, X)))
 
   return {
     x: Y[0][0],
