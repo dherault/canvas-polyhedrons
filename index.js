@@ -1,4 +1,4 @@
-const { cos, sin, sqrt, abs, PI } = Math
+const { cos, sin, acos, atan, sqrt, PI } = Math
 const TAU = 2 * PI
 const canvas = document.getElementsByTagName('canvas')[0]
 const _ = canvas.getContext('2d')
@@ -8,13 +8,17 @@ const height = canvas.height = window.innerHeight
 
 const backgroundColor = 'white'
 const verticeColor = 'black'
-const nodeColor = 'red'
-const centerColor = 'blue'
-const pivotColor = 'green'
-const originColor = 'gold'
+const faceColor = 'white'
+// const nodeColor = 'red'
+// const centerColor = 'blue'
+// const pivotColor = 'green'
+// const originColor = 'gold'
 
 // const polyhedron = createPolyhedron(PI / 2, PI / 2)
-const polyhedron = createPolyhedron(PI / 3, PI / 3)
+// const polyhedron = createPolyhedron(PI / 3, acos(1 / 3))
+// const polyhedron = createPolyhedron(PI / 3, acos(-1 / 3))
+const polyhedron = createPolyhedron(PI / 3, acos(-sqrt(5) / 3))
+// const polyhedron = createPolyhedron(PI / 5, 2 * atan((1 + sqrt(5)) / 2))
 
 // let da = PI / 360
 // let db = PI / 360
@@ -74,48 +78,46 @@ function draw() {
   _.fillStyle = backgroundColor
   _.fillRect(0, 0, width, height)
 
-  const nodes = project(polyhedron.nodes, polyhedron.rotation, polyhedron.rotationOffset)
-  const centers = project(polyhedron.centers, polyhedron.rotation, polyhedron.rotationOffset)
-  const pivots = project(polyhedron.pivots, polyhedron.rotation, polyhedron.rotationOffset)
+  const faces = polyhedron.faces.map(face => project(face, polyhedron.rotation, polyhedron.rotationOffset))
+  // const centers = project(polyhedron.centers, polyhedron.rotation, polyhedron.rotationOffset)
+  // const pivots = project(polyhedron.pivots, polyhedron.rotation, polyhedron.rotationOffset)
 
-  _.fillStyle = originColor
-  _.beginPath()
-  _.arc(translationVector.x, translationVector.y, 5, 0, TAU)
-  _.closePath()
-  _.fill()
+  // _.fillStyle = originColor
+  // _.beginPath()
+  // _.arc(translationVector.x, translationVector.y, 5, 0, TAU)
+  // _.closePath()
+  // _.fill()
 
   _.strokeStyle = verticeColor
-  _.beginPath()
-  polyhedron.vertices.forEach(([i, j]) => {
-    _.moveTo(nodes[i].x, nodes[i].y)
-    _.lineTo(nodes[j].x, nodes[j].y)
-  })
-  _.closePath()
-  _.stroke()
-
-  _.fillStyle = centerColor
-  centers.forEach(center => {
+  _.fillStyle = faceColor
+  faces.forEach(face => {
     _.beginPath()
-    _.arc(center.x, center.y, 4, 0, TAU)
+    _.moveTo(face[0].x, face[0].y)
+
+    for (let i = 1; i < face.length; i++) {
+      _.lineTo(face[i].x, face[i].y)
+    }
+
     _.closePath()
+    _.stroke()
     _.fill()
   })
 
-  _.fillStyle = pivotColor
-  pivots.forEach(pivot => {
-    _.beginPath()
-    _.arc(pivot.x, pivot.y, 3, 0, TAU)
-    _.closePath()
-    _.fill()
-  })
+  // _.fillStyle = centerColor
+  // centers.forEach(center => {
+  //   _.beginPath()
+  //   _.arc(center.x, center.y, 4, 0, TAU)
+  //   _.closePath()
+  //   _.fill()
+  // })
 
-  _.fillStyle = nodeColor
-  nodes.forEach(node => {
-    _.beginPath()
-    _.arc(node.x, node.y, 2, 0, TAU)
-    _.closePath()
-    _.fill()
-  })
+  // _.fillStyle = pivotColor
+  // pivots.forEach(pivot => {
+  //   _.beginPath()
+  //   _.arc(pivot.x, pivot.y, 3, 0, TAU)
+  //   _.closePath()
+  //   _.fill()
+  // })
 }
 
 function update() {
@@ -170,37 +172,6 @@ function addVectors(u, v) {
   }
 }
 
-function rotateVectorOnZAxis({ x, y, z }, angle) {
-  const cosAngle = cos(angle)
-  const sinAngle = sin(angle)
-  const rotateZ = [
-    [cosAngle, -sinAngle, 0],
-    [sinAngle, cosAngle, 0],
-    [0, 0, 1],
-  ]
-  const X = [[x], [y], [z]]
-  const Y = multiplyMatrices(rotateZ, X)
-
-  return {
-    x: Y[0][0],
-    y: Y[1][0],
-    z: Y[2][0],
-  }
-}
-
-function rotatePointOnZAxis(point, origin, angle) {
-  const x = point.x - origin.x
-  const y = point.y - origin.y
-  const c = cos(angle)
-  const s = sin(angle)
-
-  return {
-    x: x * c - y * s + origin.x,
-    y: x * s + y * c + origin.y,
-    z: 0,
-  }
-}
-
 function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
   const ca = cos(a)
   const sa = sin(a)
@@ -214,8 +185,6 @@ function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
   const sbeta = sin(beta)
   const cgamma = cos(gamma)
   const sgamma = sin(gamma)
-
-  // console.log('ca, sa, cb, sb, cc, sc', ca, sa, cb, sb, cc, sc)
 
   const X = [[x], [y], [z]]
   const rotateX = [
@@ -249,28 +218,12 @@ function projectOnZPlane({ x, y, z }, { a, b, c }, { alpha, beta, gamma }) {
     [0, 0, 1],
   ]
 
-  // console.log('X, rotateX, rotateY, rotateZ, rotateAlpha, rotateBeta, rotateGamma', X, rotateX, rotateY, rotateZ, rotateAlpha, rotateBeta, rotateGamma)
-
   let Y = multiplyMatrices(rotateZ, multiplyMatrices(rotateY, multiplyMatrices(rotateX, X)))
   Y = multiplyMatrices(rotateGamma, multiplyMatrices(rotateBeta, multiplyMatrices(rotateAlpha, Y)))
-  // const projection = [
-  //   [1, 0, 0.5],
-  //   [0, 1, 0.5],
-  //   [0, 0, 0],
-  // ]
-
-  // Y = multiplyMatrices(projection, Y)
 
   return {
     x: Y[0][0],
     y: Y[1][0],
-  }
-}
-
-function translateOnZPlane(point, vector) {
-  return {
-    x: point.x + vector.x,
-    y: point.y + vector.y,
   }
 }
 
@@ -304,7 +257,7 @@ function crossProduct(a, b) {
   return {
     x: a.y * b.z - a.z * b.y,
     y: a.z * b.x - a.x * b.z,
-    z: a.x * b.y - a.y * b.x
+    z: a.x * b.y - a.y * b.x,
   }
 }
 
@@ -345,12 +298,10 @@ function rotatePointAroundAxis(p, a, b, angle) {
 
 function createPolyhedron(angle, dihedralAngle) {
   const polyhedron = {
-    nodes: [],
+    faces: [],
     centers: [],
     pivots: [],
-    vertices: [],
     rotation: { a: 0, b: 0, c: 0 },
-    // rotationOffset: { alpha: -PI / 2, beta: PI / 4, gamma: 0 },
     rotationOffset: { alpha: 0, beta: 0, gamma: 0 },
   }
 
@@ -359,21 +310,22 @@ function createPolyhedron(angle, dihedralAngle) {
   const firstNormalVector = { x: 0, y: 0, z: 1 }
 
   polyhedron.centers.push(firstOrigin)
-  polyhedron.nodes.push(...createPolygonNodes(angle, firstOrigin, firstNormalVector))
+  polyhedron.faces.push(createPolygonNodes(angle, firstOrigin, firstNormalVector))
 
+  console.log('polyhedron.faces[0]', polyhedron.faces[0])
   const queue = [
     {
       origin: firstOrigin,
-      nodes: polyhedron.nodes,
+      nodes: polyhedron.faces[0],
     },
   ]
 
   while (true) {
-    console.log('queue.length', queue.length)
     if (!queue.length) break
 
     const { origin, nodes } = queue.shift()
 
+    console.log('nodes', nodes)
     for (let i = 0; i < nSides; i++) {
       const a = nodes[i]
       const b = nodes[i === nSides - 1 ? 0 : i + 1]
@@ -386,11 +338,11 @@ function createPolyhedron(angle, dihedralAngle) {
 
       if (polyhedron.centers.every(o => norm(createVector(o, rotatedNextOrigin)) > 0.01)) {
         const polygonNodes = createPolygonNodes(angle, nextOrigin, normalVector, a)
-        // .map(node => rotatePointAroundAxis(node, a, b, PI - dihedralAngle))
+        .map(node => rotatePointAroundAxis(node, a, b, PI - dihedralAngle))
 
         polyhedron.pivots.push(pivot)
-        polyhedron.centers.push(nextOrigin, rotatedNextOrigin)
-        polyhedron.nodes.push(...polygonNodes)
+        polyhedron.centers.push(rotatedNextOrigin)
+        polyhedron.faces.push(polygonNodes)
 
         queue.push({
           origin: rotatedNextOrigin,
@@ -398,29 +350,21 @@ function createPolyhedron(angle, dihedralAngle) {
         })
       }
     }
-
-    break
-
   }
-
-  const nFaces = polyhedron.nodes.length / nSides
-
-  console.log('polyhedron', nFaces, nSides, polyhedron)
 
   return polyhedron
 }
 
 function createPolygonNodes(angle, origin, normalVector, firstNode) {
   const innerAngle = PI - angle
-  const n = TAU / innerAngle
+  const n = PI / angle
 
+  console.log('n', innerAngle, n)
   const distanceFromCenter = sqrt(1 / 2 / (1 - cos(angle)))
   const nodes = [firstNode || { x: distanceFromCenter + origin.x, y: origin.y, z: origin.z }]
 
   for (let i = 1; i < n; i++) {
-    const previousPoint = nodes[i - 1]
-
-    nodes.push(rotatePointAroundAxis(previousPoint, origin, addVectors(origin, normalVector), innerAngle))
+    nodes.push(rotatePointAroundAxis(nodes[i - 1], origin, addVectors(origin, normalVector), innerAngle))
   }
 
   return nodes
