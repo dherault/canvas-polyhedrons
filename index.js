@@ -15,11 +15,11 @@ const oOrigin = { x: 0, y: 0, z: 0 }
 const forward = { x: 0, y: 0, z: 1 }
 
 const nameToScale = {
-  hexahedron: [40, 64],
-  tetraedron: [40, 64],
-  octahedron: [40, 64],
-  icosahedron: [32, 64],
-  dodecahedron: [24, 48],
+  hexahedron: [48, 64],
+  tetraedron: [48, 64],
+  octahedron: [48, 64],
+  icosahedron: [32, 48],
+  dodecahedron: [12, 32],
 }
 
 const patrons = [
@@ -27,12 +27,13 @@ const patrons = [
   createPolyhedron(3, acos(1 / 3), 'tetraedron'),
   createPolyhedron(3, acos(-1 / 3), 'octahedron'),
   createPolyhedron(3, acos(-sqrt(5) / 3), 'icosahedron'),
-  createPolyhedron(5, 2 * atan((1 + sqrt(5)) / 2), 'dedecahedron'),
+  createPolyhedron(5, 2 * atan((1 + sqrt(5)) / 2), 'dodecahedron'),
 ]
 
 const polyhedrons = []
 
 for (let i = 0; i < nPolyhedron; i++) {
+  console.log('randomArray(patrons).name', randomArray(patrons).name)
   polyhedrons.push(createPolyhedronInstance(randomArray(patrons)))
 }
 
@@ -68,6 +69,8 @@ function draw() {
 --- */
 
 function update() {
+  const newPolyhedrons = []
+
   polyhedrons.forEach((polyhedron, i) => {
     polyhedron.a += polyhedron.da
     polyhedron.b += polyhedron.db
@@ -92,9 +95,11 @@ function update() {
         nextPolyhedron.y = nextPolyhedron.dy < 0 ? height + nextPolyhedron.scaleFactor : -nextPolyhedron.scaleFactor
       }
 
-      polyhedrons.push(nextPolyhedron)
+      newPolyhedrons.push(nextPolyhedron)
     }
   })
+
+  polyhedrons.push(...newPolyhedrons)
 }
 
 /* ---
