@@ -33,7 +33,6 @@ const patrons = [
 const polyhedrons = []
 
 for (let i = 0; i < nPolyhedron; i++) {
-  console.log('randomArray(patrons).name', randomArray(patrons).name)
   polyhedrons.push(createPolyhedronInstance(randomArray(patrons)))
 }
 
@@ -54,7 +53,7 @@ function draw() {
       _.moveTo(nodes[0].x + polyhedron.x, nodes[0].y + polyhedron.y)
 
       for (let i = 1; i < nodes.length; i++) {
-        _.lineTo(nodes[i].x + polyhedron.x, nodes[i].y +  polyhedron.y)
+        _.lineTo(nodes[i].x + polyhedron.x, nodes[i].y + polyhedron.y)
       }
 
       _.closePath()
@@ -180,6 +179,7 @@ function createPolygonNodes(nSides, origin, normalVector, firstNode) {
 }
 
 function createPolyhedronInstance(patron) {
+  // eslint-disable-next-line prefer-spread
   const scaleFactor = randomRange.apply(null, nameToScale[patron.name])
   const params = suffle([0, randomRange(0, TAU), randomRange(0, TAU)])
   const dParams = suffle([0, randomRange(0, PI / 64), randomRange(0, PI / 64)])
